@@ -137,6 +137,10 @@ public:
 
     void restrictM(std::set<float> m) { range_m = m; }
 
+    void restrictPhN(float ph_n_min, float ph_n_max) { this->range(range_ph_n, ph_n_min, ph_n_max); }
+
+    void restrictPhN(std::set<float> ph_n) { range_ph_n = ph_n; }
+
     ////////////////////////////////////////////////////////////////////
     /// Method for adding user-defined states //////////////////////////
     ////////////////////////////////////////////////////////////////////
@@ -493,7 +497,7 @@ public:
         // In case of no new basis restrictions and already initialized basis, there is nothing to
         // do
         if (!states.empty() && states_to_add.empty() && range_n.empty() && range_l.empty() &&
-            range_j.empty() && range_m.empty() &&
+            range_j.empty() && range_m.empty() && range_ph_n.empty() &&
             energy_min == std::numeric_limits<double>::lowest() &&
             energy_max == std::numeric_limits<double>::max()) { // TODO check for new threshold, too
             return;
@@ -1232,7 +1236,7 @@ protected:
     double threshold_for_sqnorm;
 
     double energy_min, energy_max;
-    std::set<int> range_n, range_l;
+    std::set<int> range_n, range_l, range_ph_n;
     std::set<float> range_j, range_m;
     std::set<T> states_to_add;
 
@@ -1332,7 +1336,8 @@ protected:
             (checkIsQuantumnumberValid(state.getN(), range_n) &&
              checkIsQuantumnumberValid(state.getL(), range_l) &&
              checkIsQuantumnumberValid(state.getJ(), range_j) &&
-             checkIsQuantumnumberValid(state.getM(), range_m));
+             checkIsQuantumnumberValid(state.getM(), range_m) &&
+             checkIsQuantumnumberValid(state.getPhN(), range_ph_n));
     }
 
     bool checkIsQuantumstateValid(const T &state, std::array<bool, 2> a) {
@@ -1343,7 +1348,8 @@ protected:
                  (checkIsQuantumnumberValid(state.getN(idx), range_n) &&
                   checkIsQuantumnumberValid(state.getL(idx), range_l) &&
                   checkIsQuantumnumberValid(state.getJ(idx), range_j) &&
-                  checkIsQuantumnumberValid(state.getM(idx), range_m)));
+                  checkIsQuantumnumberValid(state.getM(idx), range_m) &&
+                  checkIsQuantumnumberValid(state.getPhN(idx), range_ph_n)));
         }
         return valid;
     }
@@ -1490,6 +1496,7 @@ private:
         range_l.clear();
         range_j.clear();
         range_m.clear();
+        range_ph_n.clear();
         states_to_add.clear();
     }
 
@@ -1515,7 +1522,7 @@ private:
 
     void updateEverything() {
 
-        if (!range_n.empty() || !range_l.empty() || !range_j.empty() || !range_m.empty()) {
+        if (!range_n.empty() || !range_l.empty() || !range_j.empty() || !range_m.empty() || range_ph_n.empty()) {
 
             ////////////////////////////////////////////////////////////////////
             /// Remove restricted states ///////////////////////////////////////
@@ -1530,7 +1537,7 @@ private:
             this->onStatesChange();
         }
 
-        if (!range_n.empty() || !range_l.empty() || !range_j.empty() || !range_m.empty() ||
+        if (!range_n.empty() || !range_l.empty() || !range_j.empty() || !range_m.empty() || !range_ph_n.empty() ||
             energy_min != std::numeric_limits<double>::lowest() ||
             energy_max != std::numeric_limits<double>::max()) {
 
@@ -1600,7 +1607,7 @@ private:
     template <class Archive>
     void serialize(Archive &ar, const unsigned int /*version*/) {
         ar &cache &threshold_for_sqnorm;
-        ar &energy_min &energy_max &range_n &range_l &range_j &range_m &states_to_add;
+        ar &energy_min &energy_max &range_n &range_l &range_j &range_m &range_ph_n &states_to_add;
         ar &memory_saving &is_interaction_already_contained &is_new_hamiltonian_required;
         ar &states &basisvectors &hamiltonian;
         ar &basisvectors_unperturbed_cache &hamiltonian_unperturbed_cache;
