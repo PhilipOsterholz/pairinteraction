@@ -52,19 +52,21 @@ inline std::ostream &operator<<(std::ostream &os, getMomentumLabel const &l) {
 /// Implementation of one-atom state ///////////////////////////////
 ////////////////////////////////////////////////////////////////////
 
-StateOne::StateOne(std::string species, int n, int l, float j, float m)
-    : species(std::move(species)), n(n), l(l), j(j), m(m) {
+StateOne::StateOne(std::string species, int n, int l, float j, float m, float ph_e, int ph_n)
+    : species(std::move(species)), n(n), l(l), j(j), m(m), ph_n(ph_n), ph_e(ph_e) {
     this->analyzeSpecies();
     hashvalue = 0;
     utils::hash_combine(hashvalue, this->getSpecies());
+    utils::hash_combine(hashvalue, this->getPhE());
     utils::hash_combine(hashvalue, this->getN());
     utils::hash_combine(hashvalue, this->getL());
     utils::hash_combine(hashvalue, this->getJ());
     utils::hash_combine(hashvalue, this->getM());
+    utils::hash_combine(hashvalue, this->getPhN());
 }
 
 StateOne::StateOne(std::string label)
-    : species(std::move(label)), element(""), n(0), l(0), j(0), m(0), s(0) {
+    : species(std::move(label)), element(""), n(0), l(0), j(0), m(0), s(0), ph_n(0), ph_e(0) {
     hashvalue = std::hash<std::string>{}(this->getLabel());
 }
 
@@ -85,6 +87,11 @@ std::ostream &operator<<(std::ostream &out, const StateOne &state) {
         }
     }
     out << ">";
+    if (state.getPhE() != 0) {
+        out << "|";
+        out << "phE=" << state.getPhE() << ", ";
+        out << "phN=" << state.getPhN() << ">";
+    }
     return out;
 }
 
@@ -115,6 +122,14 @@ const float &StateOne::getS() const {
     this->shouldBeArtificial(false);
     return s;
 }
+const int &StateOne::getPhN() const {
+    this->shouldBeArtificial(false);
+    return ph_n;
+}
+const float &StateOne::getPhE() const {
+    this->shouldBeArtificial(false);
+    return ph_e;
+}
 const std::string &StateOne::getSpecies() const {
     this->shouldBeArtificial(false);
     return species;
@@ -125,11 +140,11 @@ const std::string &StateOne::getElement() const {
 }
 double StateOne::getEnergy() const {
     this->shouldBeArtificial(false);
-    return energy_level(species, n, l, j);
+    return energy_level(species, n, l, j) + ph_n*ph_e;
 }
 double StateOne::getEnergy(MatrixElementCache &cache) const {
     this->shouldBeArtificial(false);
-    return energy_level(species, n, l, j, cache.getDefectDB());
+    return energy_level(species, n, l, j, cache.getDefectDB()) + ph_n*ph_e;
 }
 double StateOne::getNStar() const {
     this->shouldBeArtificial(false);
@@ -145,33 +160,34 @@ const std::string &StateOne::getLabel() const {
 }
 bool StateOne::isArtificial() const { return (n == 0); }
 bool StateOne::isGeneralized() const {
-    return (n == ARB) || (l == ARB) || (j == ARB) || (m == ARB);
+    return (n == ARB) || (l == ARB) || (j == ARB) || (m == ARB) || (ph_n == ARB) || (ph_e == ARB);
 }
 
 const size_t &StateOne::getHash() const { return hashvalue; }
 
 StateOne StateOne::getReflected() const {
-    return StateOne(this->getSpecies(), this->getN(), this->getL(), this->getJ(), -this->getM());
+    return StateOne(this->getSpecies(), this->getN(), this->getL(), this->getJ(), -this->getM(), this->getPhE(), this->getPhN());
 }
 
 // Comparators
 bool StateOne::operator==(StateOne const &rhs) const {
-    return (species == rhs.species) && (n == rhs.n) && (l == rhs.l) && (j == rhs.j) && (m == rhs.m);
+    return (species == rhs.species) && (n == rhs.n) && (l == rhs.l) && (j == rhs.j) && (m == rhs.m) && (ph_e == rhs.ph_e) && (ph_n == rhs.ph_n);
 }
 bool StateOne::operator^(StateOne const &rhs) const {
     return (species == rhs.species) && (rhs.n == ARB || n == rhs.n) &&
         (rhs.l == ARB || l == rhs.l) && (rhs.j == ARB || j == rhs.j) &&
-        (rhs.m == ARB || m == rhs.m);
+        (rhs.m == ARB || m == rhs.m) && (rhs.ph_e == ARB || rhs.ph_e == ph_e) && 
+        (rhs.ph_n == ARB || rhs.ph_n == ph_n);
 }
 bool StateOne::operator!=(StateOne const &rhs) const {
-    return (species != rhs.species) || (n != rhs.n) || (l != rhs.l) || (j != rhs.j) || (m != rhs.m);
+    return (species != rhs.species) || (n != rhs.n) || (l != rhs.l) || (j != rhs.j) || (m != rhs.m) || (ph_e != rhs.ph_e) || (ph_n != rhs.ph_n);
 }
 bool StateOne::operator<(const StateOne &rhs) const {
     return (species < rhs.species) ||
         ((species == rhs.species) &&
          ((n < rhs.n) ||
           ((n == rhs.n) &&
-           ((l < rhs.l) || ((l == rhs.l) && ((j < rhs.j) || ((j == rhs.j) && (m < rhs.m))))))));
+           ((l < rhs.l) || ((l == rhs.l) && ((j < rhs.j) || ((j == rhs.j) && ((m < rhs.m) || ((m == rhs.m) && ((ph_e < rhs.ph_e) || ((ph_e == rhs.ph_e) && (ph_n < rhs.ph_n))))))))))));
 }
 bool StateOne::operator<=(const StateOne &rhs) const { return (*this < rhs) || (*this == rhs); }
 
@@ -195,9 +211,9 @@ void StateOne::shouldBeArtificial(bool opinion) const {
 ////////////////////////////////////////////////////////////////////
 
 StateTwo::StateTwo(std::array<std::string, 2> species, std::array<int, 2> n, std::array<int, 2> l,
-                   std::array<float, 2> j, std::array<float, 2> m)
-    : state_array({{StateOne(species[0], n[0], l[0], j[0], m[0]),
-                    StateOne(species[1], n[1], l[1], j[1], m[1])}}) {
+                   std::array<float, 2> j, std::array<float, 2> m, std::array<float, 2> ph_e, std::array<int, 2> ph_n)
+    : state_array({{StateOne(species[0], n[0], l[0], j[0], m[0], ph_e[0], ph_n[0]),
+                    StateOne(species[1], n[1], l[1], j[1], m[1], ph_e[1], ph_n[1])}}) {
     hashvalue = 0;
     utils::hash_combine(hashvalue, state_array[0].getHash());
     utils::hash_combine(hashvalue, state_array[1].getHash());
@@ -243,6 +259,12 @@ std::array<float, 2> StateTwo::getM() const {
 std::array<float, 2> StateTwo::getS() const {
     return {{state_array[0].getS(), state_array[1].getS()}};
 }
+std::array<float, 2> StateTwo::getPhE() const {
+    return {{state_array[0].getPhE(), state_array[1].getPhE()}};
+}
+std::array<int, 2> StateTwo::getPhN() const {
+    return {{state_array[0].getPhN(), state_array[1].getPhN()}};
+}
 std::array<std::string, 2> StateTwo::getSpecies() const {
     return {{state_array[0].getSpecies(), state_array[1].getSpecies()}};
 }
@@ -281,6 +303,8 @@ const int &StateTwo::getL(int idx) const { return state_array[idx].getL(); }
 const float &StateTwo::getJ(int idx) const { return state_array[idx].getJ(); }
 const float &StateTwo::getM(int idx) const { return state_array[idx].getM(); }
 const float &StateTwo::getS(int idx) const { return state_array[idx].getS(); }
+const int &StateTwo::getPhN(int idx) const { return state_array[idx].getPhN(); }
+const float &StateTwo::getPhE(int idx) const { return state_array[idx].getPhE(); }
 const std::string &StateTwo::getSpecies(int idx) const { return state_array[idx].getSpecies(); }
 const std::string &StateTwo::getElement(int idx) const { return state_array[idx].getElement(); }
 double StateTwo::getEnergy(int idx) const { return state_array[idx].getEnergy(); }
@@ -302,7 +326,7 @@ const size_t &StateTwo::getHash() const { return hashvalue; }
 
 StateTwo StateTwo::getReflected() const {
     return StateTwo(this->getSpecies(), this->getN(), this->getL(), this->getJ(),
-                    {{-this->getM(0), -this->getM(1)}});
+                    {{-this->getM(0), -this->getM(1)}}, this->getPhE(), this->getPhN());
 }
 
 // Comparators
