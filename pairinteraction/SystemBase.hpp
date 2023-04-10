@@ -137,9 +137,9 @@ public:
 
     void restrictM(std::set<float> m) { range_m = m; }
 
-    void restrictPhN(float ph_n_min, float ph_n_max) { this->range(range_ph_n, ph_n_min, ph_n_max); }
+    void restrictPhN(int ph_n_min, int ph_n_max) { this->range(range_ph_n, ph_n_min, ph_n_max); }
 
-    void restrictPhN(std::set<float> ph_n) { range_ph_n = ph_n; }
+    void restrictPhN(std::set<int> ph_n) { range_ph_n = ph_n; }
 
     ////////////////////////////////////////////////////////////////////
     /// Method for adding user-defined states //////////////////////////

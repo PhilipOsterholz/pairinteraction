@@ -52,7 +52,7 @@ inline std::ostream &operator<<(std::ostream &os, getMomentumLabel const &l) {
 /// Implementation of one-atom state ///////////////////////////////
 ////////////////////////////////////////////////////////////////////
 
-StateOne::StateOne(std::string species, int n, int l, float j, float m, float ph_e, int ph_n)
+StateOne::StateOne(std::string species, int n, int l, float j, float m, double ph_e, int ph_n)
     : species(std::move(species)), n(n), l(l), j(j), m(m), ph_n(ph_n), ph_e(ph_e) {
     this->analyzeSpecies();
     hashvalue = 0;
@@ -126,7 +126,7 @@ const int &StateOne::getPhN() const {
     this->shouldBeArtificial(false);
     return ph_n;
 }
-const float &StateOne::getPhE() const {
+const double &StateOne::getPhE() const {
     this->shouldBeArtificial(false);
     return ph_e;
 }
@@ -211,7 +211,7 @@ void StateOne::shouldBeArtificial(bool opinion) const {
 ////////////////////////////////////////////////////////////////////
 
 StateTwo::StateTwo(std::array<std::string, 2> species, std::array<int, 2> n, std::array<int, 2> l,
-                   std::array<float, 2> j, std::array<float, 2> m, std::array<float, 2> ph_e, std::array<int, 2> ph_n)
+                   std::array<float, 2> j, std::array<float, 2> m, std::array<double, 2> ph_e, std::array<int, 2> ph_n)
     : state_array({{StateOne(species[0], n[0], l[0], j[0], m[0], ph_e[0], ph_n[0]),
                     StateOne(species[1], n[1], l[1], j[1], m[1], ph_e[1], ph_n[1])}}) {
     hashvalue = 0;
@@ -259,7 +259,7 @@ std::array<float, 2> StateTwo::getM() const {
 std::array<float, 2> StateTwo::getS() const {
     return {{state_array[0].getS(), state_array[1].getS()}};
 }
-std::array<float, 2> StateTwo::getPhE() const {
+std::array<double, 2> StateTwo::getPhE() const {
     return {{state_array[0].getPhE(), state_array[1].getPhE()}};
 }
 std::array<int, 2> StateTwo::getPhN() const {
@@ -304,7 +304,7 @@ const float &StateTwo::getJ(int idx) const { return state_array[idx].getJ(); }
 const float &StateTwo::getM(int idx) const { return state_array[idx].getM(); }
 const float &StateTwo::getS(int idx) const { return state_array[idx].getS(); }
 const int &StateTwo::getPhN(int idx) const { return state_array[idx].getPhN(); }
-const float &StateTwo::getPhE(int idx) const { return state_array[idx].getPhE(); }
+const double &StateTwo::getPhE(int idx) const { return state_array[idx].getPhE(); }
 const std::string &StateTwo::getSpecies(int idx) const { return state_array[idx].getSpecies(); }
 const std::string &StateTwo::getElement(int idx) const { return state_array[idx].getElement(); }
 double StateTwo::getEnergy(int idx) const { return state_array[idx].getEnergy(); }

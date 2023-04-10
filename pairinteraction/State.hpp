@@ -45,7 +45,7 @@ class MatrixElementCache;
 class StateOne {
 public:
     StateOne() = default;
-    explicit StateOne(std::string species, int n, int l, float j, float m, float ph_e = 0, int ph_n = 0);
+    explicit StateOne(std::string species, int n, int l, float j, float m, double ph_e = 0, int ph_n = 0);
     explicit StateOne(std::string label);
 
     // Methods for printing the state
@@ -59,7 +59,7 @@ public:
     const float &getM() const;
     const float &getS() const;
     const int &getPhN() const;
-    const float &getPhE() const;
+    const double &getPhE() const;
     const std::string &getSpecies() const;
     const std::string &getElement() const;
     double getEnergy() const;
@@ -86,7 +86,8 @@ private:
     // https://stackoverflow.com/questions/50603180/serialization-of-class-with-const-members-using-boost)
     std::string species, element;
     int n, l, ph_n;
-    float j, m, s, ph_e;
+    float j, m, s;
+    double ph_e;
     size_t hashvalue;
 
     // Method for serialization
@@ -112,7 +113,7 @@ class StateTwo {
 public:
     StateTwo() = default;
     explicit StateTwo(std::array<std::string, 2> species, std::array<int, 2> n,
-                      std::array<int, 2> l, std::array<float, 2> j, std::array<float, 2> m, std::array<float, 2> ph_e = {{0,0}}, std::array<int, 2> ph_n = {{0, 0}});
+                      std::array<int, 2> l, std::array<float, 2> j, std::array<float, 2> m, std::array<double, 2> ph_e = {{0,0}}, std::array<int, 2> ph_n = {{0, 0}});
     explicit StateTwo(std::array<std::string, 2> label); // TODO use &&label?
     explicit StateTwo(StateOne first_state, StateOne second_state);
 
@@ -127,7 +128,7 @@ public:
     std::array<float, 2> getM() const;
     std::array<float, 2> getS() const;
     std::array<int, 2> getPhN() const;
-    std::array<float, 2> getPhE() const;
+    std::array<double, 2> getPhE() const;
     std::array<std::string, 2> getSpecies() const;
     std::array<std::string, 2> getElement() const;
     double getEnergy() const;
@@ -145,7 +146,7 @@ public:
     const float &getM(int idx) const;
     const float &getS(int idx) const;
     const int &getPhN(int idx) const;
-    const float &getPhE(int idx) const;
+    const double &getPhE(int idx) const;
     const std::string &getSpecies(int idx) const;
     const std::string &getElement(int idx) const;
     double getEnergy(int idx) const;

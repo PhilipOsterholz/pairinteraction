@@ -33,12 +33,12 @@
 SystemOne::SystemOne(std::string species, MatrixElementCache &cache)
     : SystemBase(cache), efield({{0, 0, 0}}), bfield({{0, 0, 0}}), diamagnetism(true), charge(0),
       ordermax(0), distance(std::numeric_limits<double>::max()), species(std::move(species)),
-      sym_reflection(NA), sym_rotation({static_cast<float>(ARB)}) {}
+      sym_reflection(NA), sym_rotation({static_cast<float>(ARB)}), microwave_freq(0) {}
 
 SystemOne::SystemOne(std::string species, MatrixElementCache &cache, bool memory_saving)
     : SystemBase(cache, memory_saving), efield({{0, 0, 0}}), bfield({{0, 0, 0}}),
       diamagnetism(true), charge(0), ordermax(0), distance(std::numeric_limits<double>::max()),
-      species(std::move(species)), sym_reflection(NA), sym_rotation({static_cast<float>(ARB)}) {}
+      species(std::move(species)), sym_reflection(NA), sym_rotation({static_cast<float>(ARB)}), microwave_freq(0) {}
 
 const std::string &SystemOne::getSpecies() const { return species; }
 
@@ -48,7 +48,10 @@ void SystemOne::setEfield(std::array<double, 3> field) {
 
     // Transform the electric field into spherical coordinates
     this->changeToSphericalbasis(efield, efield_spherical);
-}
+} 
+
+//void SystemOne::setMWField(std::array< std::complex<double>, 2> jones_vector, std::array<double, 3> propagation_vector)
+//    :{}
 
 void SystemOne::setBfield(std::array<double, 3> field) {
     this->onParameterChange();
@@ -92,6 +95,9 @@ void SystemOne::setBfield(std::array<double, 3> field, double alpha, double beta
 void SystemOne::enableDiamagnetism(bool enable) {
     this->onParameterChange();
     diamagnetism = enable;
+}
+void SystemOne::setMWfield_freq(double mw_freq) {
+    this->microwave_freq = mw_freq;
 }
 void SystemOne::setIonCharge(int c) {
     this->onParameterChange();
@@ -164,7 +170,7 @@ void SystemOne::initializeBasis() {
 
     /// Loop over specified quantum numbers ////////////////////////////
 
-    std::set<int> range_adapted_n, range_adapted_l;
+    std::set<int> range_adapted_n, range_adapted_l, range_adapted_ph_n;
     std::set<float> range_adapted_j, range_adapted_m;
 
     if (range_n.empty()) {
@@ -195,45 +201,54 @@ void SystemOne::initializeBasis() {
                     continue;
                 }
 
-                double energy = StateOne(species, n, l, j, s).getEnergy(cache);
-                if (!checkIsEnergyValid(energy)) {
-                    continue;
-                }
-
-                if (range_m.empty()) {
-                    this->range(range_adapted_m, -j, j);
+                if (range_ph_n.empty()) {
+                    range_adapted_ph_n = { 0 };
                 } else {
-                    range_adapted_m = range_m;
+                    range_adapted_ph_n = range_ph_n;
                 }
 
-                // Consider rotation symmetry
-                std::set<float> range_allowed_m;
-                if (sym_rotation.count(static_cast<float>(ARB)) == 0) {
-                    std::set_intersection(sym_rotation.begin(), sym_rotation.end(),
-                                          range_adapted_m.begin(), range_adapted_m.end(),
-                                          std::inserter(range_allowed_m, range_allowed_m.begin()));
-                } else {
-                    range_allowed_m = range_adapted_m;
-                }
+                for (auto ph_n : range_adapted_ph_n) {
 
-                for (auto m : range_allowed_m) {
-                    if (std::fabs(m) > j) {
+                    double energy = StateOne(species, n, l, j, s, microwave_freq, ph_n).getEnergy(cache);
+                    if (!checkIsEnergyValid(energy)) {
                         continue;
                     }
 
-                    // Create state
-                    StateOne state(species, n, l, j, m);
-
-                    // Check whether reflection symmetry can be realized with the states available
-                    if (sym_reflection != NA && state.getM() != 0 &&
-                        range_allowed_m.count(-state.getM()) == 0) {
-                        throw std::runtime_error("The momentum " + std::to_string(-state.getM()) +
-                                                 " required by symmetries cannot be found.");
+                    if (range_m.empty()) {
+                        this->range(range_adapted_m, -j, j);
+                    } else {
+                        range_adapted_m = range_m;
                     }
 
-                    // Add symmetrized basis vectors
-                    this->addSymmetrizedBasisvectors(state, idx, energy, basisvectors_triplets,
-                                                     hamiltonian_triplets, sym_reflection);
+                    // Consider rotation symmetry
+                    std::set<float> range_allowed_m;
+                    if (sym_rotation.count(static_cast<float>(ARB)) == 0) {
+                        std::set_intersection(sym_rotation.begin(), sym_rotation.end(),
+                                              range_adapted_m.begin(), range_adapted_m.end(),
+                                              std::inserter(range_allowed_m, range_allowed_m.begin()));
+                    } else {
+                        range_allowed_m = range_adapted_m;
+                    }
+
+                    for (auto m : range_allowed_m) {
+                        if (std::fabs(m) > j) {
+                            continue;
+                        }
+
+                        // Create state
+                        StateOne state(species, n, l, j, m, microwave_freq, ph_n);
+
+                        // Check whether reflection symmetry can be realized with the states available
+                        if (sym_reflection != NA && state.getM() != 0 &&
+                            range_allowed_m.count(-state.getM()) == 0) {
+                            throw std::runtime_error("The momentum " + std::to_string(-state.getM()) +
+                                                 " required by symmetries cannot be found.");
+                        }
+
+                        // Add symmetrized basis vectors
+                        this->addSymmetrizedBasisvectors(state, idx, energy, basisvectors_triplets,
+                                                         hamiltonian_triplets, sym_reflection);
+                    }
                 }
             }
         }

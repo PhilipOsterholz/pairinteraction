@@ -47,6 +47,7 @@ public:
     void setEfield(std::array<double, 3> field, double alpha, double beta, double gamma);
     void setBfield(std::array<double, 3> field, double alpha, double beta, double gamma);
     void enableDiamagnetism(bool enable);
+    void setMWfield_freq(double mw_freq);
     void setIonCharge(int c);
     void setRydIonOrder(unsigned int o);
     void setRydIonDistance(double d);
@@ -74,6 +75,7 @@ private:
     unsigned int ordermax;
     double distance;
     std::string species;
+    double microwave_freq;
 
     std::unordered_map<int, eigen_sparse_t> interaction_efield;
     std::unordered_map<int, eigen_sparse_t> interaction_bfield;
