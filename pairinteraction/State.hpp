@@ -20,18 +20,15 @@
 #ifndef STATE_H
 #define STATE_H
 
-#include "MatrixElementCache.hpp"
-#include "dtypes.hpp"
 #include "utils.hpp"
 
 #include <array>
 #include <cmath>
 #include <iostream>
 #include <string>
-#include <typeinfo>
 
-#include <boost/serialization/array.hpp>
-#include <boost/serialization/string.hpp>
+#include <cereal/types/array.hpp>
+#include <cereal/types/string.hpp>
 
 class MatrixElementCache;
 
@@ -91,9 +88,9 @@ private:
     size_t hashvalue;
 
     // Method for serialization
-    friend class boost::serialization::access;
+    friend class cereal::access;
     template <class Archive>
-    void serialize(Archive &ar, const unsigned int /*version*/) {
+    void serialize(Archive &ar, unsigned int /*version*/) {
         ar &species &element &n &l &j &m &s &ph_e &ph_n &hashvalue;
     }
 
@@ -178,9 +175,9 @@ private:
     size_t hashvalue;
 
     // Method for serialization
-    friend class boost::serialization::access;
+    friend class cereal::access;
     template <class Archive>
-    void serialize(Archive &ar, const unsigned int /*version*/) {
+    void serialize(Archive &ar, unsigned int /* version */) {
         ar &state_array &hashvalue;
     }
 };

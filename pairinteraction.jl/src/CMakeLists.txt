@@ -15,24 +15,25 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with the pairinteraction library. If not, see <http://www.gnu.org/licenses/>.
 
-find_package(JuliaInterp REQUIRED)
+find_program(Julia_EXECUTABLE NAMES julia REQUIRED)
+if(NOT Julia_EXECUTABLE)
+  message(FATAL_ERROR "Julia interpreter not found")
+endif()
 execute_process(
   COMMAND "${Julia_EXECUTABLE}" -e "using CxxWrap; print(joinpath(dirname(CxxWrap.jlcxx_path), \"cmake\", \"JlCxx\"))"
   OUTPUT_VARIABLE JlCxx_DIR
   OUTPUT_STRIP_TRAILING_WHITESPACE)
 find_package(JlCxx REQUIRED)
 
-add_library(pireal_jl SHARED julia_hooks_pi.cpp)
-add_library(picomplex_jl SHARED julia_hooks_pi.cpp)
+# Undo all the JlCxx shenanigans
+unset(CMAKE_CXX_STANDRD)
+set_property(TARGET JlCxx::cxxwrap_julia PROPERTY INTERFACE_COMPILE_OPTIONS)
 
-target_compile_definitions(picomplex_jl PUBLIC "USE_COMPLEX")
+add_library(pairinteraction_jl SHARED julia_hooks_pi.cpp)
 
-target_compile_features(pireal_jl PRIVATE cxx_std_17)
-set_target_properties(pireal_jl PROPERTIES CXX_EXTENSIONS OFF)
-target_compile_features(picomplex_jl PRIVATE cxx_std_17)
-set_target_properties(pireal_jl PROPERTIES CXX_EXTENSIONS OFF)
+target_compile_features(pairinteraction_jl PRIVATE cxx_std_17)
+set_target_properties(pairinteraction_jl PROPERTIES CXX_EXTENSIONS OFF)
 
-target_link_libraries(pireal_jl PUBLIC pireal JlCxx::cxxwrap_julia)
-target_link_libraries(picomplex_jl PUBLIC picomplex JlCxx::cxxwrap_julia)
+target_link_libraries(pairinteraction_jl PUBLIC pairinteraction JlCxx::cxxwrap_julia)
 
 configure_file(PairInteraction.jl ${CMAKE_CURRENT_BINARY_DIR}/PairInteraction.jl COPYONLY)

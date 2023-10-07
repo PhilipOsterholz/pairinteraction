@@ -29,6 +29,8 @@ OutFile '${BUILD_DIR}\${APP_NAME}-install-windows.exe'
 
 showinstdetails show
 
+ManifestDPIAware true
+
 InstallDir '${PROGDIR}\${APP_NAME}'
 
 !insertmacro MUI_PAGE_WELCOME
@@ -84,8 +86,7 @@ SectionGroup /e "${APP_NAME}"
     File "..\LICENSE*"
     SetOutPath "$INSTDIR\${LIBNAME}"
     File "${BUILD_DIR}\${LIBNAME}\Release\*"
-    File "${BUILD_DIR}\${LIBNAME}\pireal.py"
-    File "${BUILD_DIR}\${LIBNAME}\picomplex.py"
+    File "${BUILD_DIR}\${LIBNAME}\binding.py"
     SetOutPath "$INSTDIR\${LIBNAME}\databases"
     File "${BUILD_DIR}\${LIBNAME}\databases\*.db"
 
@@ -99,7 +100,7 @@ SectionGroup /e "${APP_NAME}"
 
   Section 'GUI (Recommended)'
     SetOutPath "$INSTDIR\${GUINAME}"
-    File /r "${BUILD_DIR}\dist\pairinteraction\*"
+    File /r "${BUILD_DIR}\dist\pairinteraction_gui\*"
   SectionEnd
 SectionGroupEnd
 
@@ -109,7 +110,7 @@ Section 'Desktop Icon'
   File "pairinteraction.ico"
   FileOpen  $4 "$INSTDIR\pairinteraction.bat" w
   FileWrite $4 "@echo off$\r$\n"
-  FileWrite $4 'cmd /k ""$INSTDIR\${GUINAME}\pairinteraction.exe""'
+  FileWrite $4 'cmd /k ""$INSTDIR\${GUINAME}\pairinteraction_gui.exe""'
   FileClose $4
 
   CreateShortCut "$DESKTOP\pairinteraction.lnk" "$INSTDIR\pairinteraction.bat" "" \

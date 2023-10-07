@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with the pairinteraction library. If not, see <http://www.gnu.org/licenses/>.
 
-cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 message(STATUS "CMake version: ${CMAKE_VERSION}")
 
 project(pairinteraction CXX)
@@ -23,10 +23,16 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     include(CTest)
 endif()
 
+# Work around buggy CMake ignoring CXX_EXTENSIONS OFF
+# https://gitlab.kitware.com/cmake/cmake/-/issues/22224
+if(POLICY CMP0128)
+  cmake_policy(SET CMP0128 NEW)
+endif()
+
 # set version of settings and cache
 
-set(VERSION_SETTINGS "v17")
-set(VERSION_CACHE "v17")
+set(VERSION_SETTINGS "v18")
+set(VERSION_CACHE "v18")
 set(VERSION_SOFTWARE_DEFAULT "v0.0.0")
 
 # get software version info from git
@@ -74,6 +80,7 @@ option(WITH_DMG      "Generate a DMG file (Mac OS X only)"  OFF)
 option(WITH_COVERAGE "Generate code coverage report"        OFF)
 option(WITH_LTO      "Build with link-time optimization"    OFF)
 option(WITH_GSL      "Use the GNU scientific library for Whittaker functions" ON)
+option(WITH_LAPACK   "Use BLAS and LAPACK to speed up linear algebra" ON)
 if(CMAKE_VERSION VERSION_GREATER 3.5.2 AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
   option(WITH_CLANG_TIDY "Run Clang-Tidy during compilation" OFF)
 endif()
@@ -207,7 +214,7 @@ elseif(UNIX)
   set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
   set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
   set(CPACK_DEBIAN_PACKAGE_DEPENDS
-    "python3-pint, python3-pyqt5, python3-psutil, python3-pyqt5.qtsvg, python3-scipy, python3-numpy, python3-pyqtgraph")
+    "python3-pint, python3-pyqt5, python3-pyqt5.qtsvg, python3-scipy, python3-numpy, python3-pyqtgraph")
   set(CPACK_DEBIAN_PACKAGE_MAINTAINER "PI5")
   set(CPACK_DEBIAN_PACKAGE_SECTION "science")
   set(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
@@ -216,7 +223,7 @@ elseif(UNIX)
   set(CPACK_RPM_PACKAGE_ARCHITECTURE "x86_64")
   set(CPACK_RPM_PACKAGE_AUTOREQPROV ON)
   set(CPACK_RPM_PACKAGE_REQUIRES
-    "python3-Pint, python3-qt5, python3-psutil, python3-scipy, python3-numpy, python3-pyqtgraph")
+    "python3-Pint, python3-qt5, python3-scipy, python3-numpy, python3-pyqtgraph")
   set(CPACK_RPM_PACKAGE_VENDOR "PI5")
   set(CPACK_RPM_PACKAGE_GROUP "Productivity/Scientific/Physics")
   set(CPACK_RPM_PACKAGE_PRIORITY "optional")

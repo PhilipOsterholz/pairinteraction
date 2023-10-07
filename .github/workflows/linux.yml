@@ -3,8 +3,7 @@ name: Linux
 on:
   push:
   pull_request:
-  schedule:
-  - cron: '0 0 * * 1' # Every Monday at 00:00
+  workflow_call:
   workflow_dispatch:
 
 # https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners
@@ -12,9 +11,7 @@ env:
   CMAKE_BUILD_PARALLEL_LEVEL: 2
   CTEST_PARALLEL_LEVEL: 2
   CTEST_OUTPUT_ON_FAILURE: 1
-  CXXFLAGS: "-Wall -Wextra -Wpedantic"
-  QT_QPA_PLATFORM: "offscreen"
-  QT_DEBUG_PLUGINS: 1
+  CXXFLAGS: "-Wall -Wextra -Wpedantic -march=broadwell"
 
 jobs:
   debian:
@@ -29,11 +26,16 @@ jobs:
     - name: Fixup Run actions/checkout
       run: git config --global --add safe.directory '*'
     - name: Configure
-      run: cmake -S . -B build/ -DBUILD_TESTING=On -DWITH_COVERAGE=On -DWITH_JULIA=On -DWITH_DOCS=On
+      run: |
+        . /opt/intel/oneapi/setvars.sh
+        cmake -S . -B build/ -DMKL_THREADING=gnu_thread -DBUILD_TESTING=On -DWITH_COVERAGE=On -DWITH_JULIA=On -DWITH_DOCS=On
     - name: Build
       run: cmake --build build/ -- --keep-going
     - name: Test
       run: cmake --build build/ --target test -- --keep-going
+      env:
+        QT_QPA_PLATFORM: "offscreen"
+        QT_DEBUG_PLUGINS: 1
     - name: Documentation
       run: |
         lcov --directory . --capture --output-file coverage.info;
@@ -45,15 +47,15 @@ jobs:
       run: |
         mkdir -p public/doxygen/ public/sphinx/ public/coverage/
         cp -r build/doc/doxygen/html public/doxygen/
-        cp -r build/doc/sphinx/html public/sphinx/
+        cp -r build/doc/sphinx/_build/html public/sphinx/
         cp -r build/doc/coverage/html public/coverage/
     - name: Deploy pages
-      if: github.ref == 'refs/heads/master'
-      uses: JamesIves/github-pages-deploy-action@v4.4.1
+      uses: JamesIves/github-pages-deploy-action@v4.4.3
       with:
         branch: gh-pages
         folder: public
         single-commit: true
+        dry-run: ${{ !(github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')) }}
 
   manylinux:
     runs-on: ubuntu-latest
@@ -78,11 +80,14 @@ jobs:
     - name: Install dependencies
       run: pip3 --cache-dir "${{ runner.temp }}/cache-pip" install -r requirements.txt
     - name: Configure
-      run: cmake -S . -B build/ -DBUILD_TESTING=On
+      run: cmake -S . -B build/ -DBLA_VENDOR=OpenBLAS -DBUILD_TESTING=On
     - name: Build
       run: cmake --build build/ -- --keep-going
     - name: Test
       run: cmake --build build/ --target test -- --keep-going
+      env:
+        QT_QPA_PLATFORM: "offscreen"
+        QT_DEBUG_PLUGINS: 1
     - name: Wheel
       run: |
         python setup.py bdist_wheel --python-tag py3 --plat-name "$AUDITWHEEL_PLAT"
@@ -109,11 +114,14 @@ jobs:
     - name: Fixup Run actions/checkout
       run: git config --global --add safe.directory '*'
     - name: Configure
-      run: cmake -S . -B build/ -DBUILD_TESTING=On -DWITH_JULIA=On -DWITH_DOCS=On -DCPACK_PACKAGE_FILE_NAME="${package}"
+      run: cmake -S . -B build/ -DBLA_VENDOR=OpenBLAS -DBUILD_TESTING=On -DWITH_JULIA=On -DWITH_DOCS=On -DCPACK_PACKAGE_FILE_NAME="${package}"
     - name: Build
       run: cmake --build build/ -- --keep-going
     - name: Test
       run: cmake --build build/ --target test -- --keep-going
+      env:
+        QT_QPA_PLATFORM: "offscreen"
+        QT_DEBUG_PLUGINS: 1
     - name: Documentation
       run: cmake --build build/ --target doc -- --keep-going
     - name: Package
@@ -135,11 +143,14 @@ jobs:
     - name: Fixup Run actions/checkout
       run: git config --global --add safe.directory '*'
     - name: Configure
-      run: cmake -S . -B build/ -DBUILD_TESTING=On -DWITH_CLANG_TIDY=On -DWITH_JULIA=On -DWITH_DOCS=On -DWITH_GUI=Off
+      run: cmake -S . -B build/ -DBLA_VENDOR=OpenBLAS -DBUILD_TESTING=On -DWITH_CLANG_TIDY=On -DWITH_JULIA=On -DWITH_DOCS=On -DWITH_GUI=Off
     - name: Build
       run: cmake --build build/ -- --keep-going
     - name: Test
       run: cmake --build build/ --target test -- --keep-going
+      env:
+        QT_QPA_PLATFORM: "offscreen"
+        QT_DEBUG_PLUGINS: 1
     - name: Documentation
       run: cmake --build build/ --target doc -- --keep-going
 
@@ -157,11 +168,14 @@ jobs:
     - name: Fixup Run actions/checkout
       run: git config --global --add safe.directory '*'
     - name: Configure
-      run: cmake -S . -B build/ -DBUILD_TESTING=On -DWITH_JULIA=On -DWITH_DOCS=On -DCPACK_PACKAGE_FILE_NAME="${package}"
+      run: cmake -S . -B build/ -DBLA_VENDOR=OpenBLAS -DBUILD_TESTING=On -DWITH_JULIA=On -DWITH_DOCS=On -DCPACK_PACKAGE_FILE_NAME="${package}"
     - name: Build
       run: cmake --build build/ -- --keep-going
     - name: Test
       run: cmake --build build/ --target test -- --keep-going
+      env:
+        QT_QPA_PLATFORM: "offscreen"
+        QT_DEBUG_PLUGINS: 1
     - name: Documentation
       run: cmake --build build/ --target doc -- --keep-going
     - name: Package

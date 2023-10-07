@@ -20,71 +20,93 @@
 #ifndef SERIALIZATION_EIGEN_H
 #define SERIALIZATION_EIGEN_H
 
-#include <Eigen/Sparse>
+#include <cereal/archives/binary.hpp>
+#include <cereal/archives/json.hpp>
+#include <cereal/cereal.hpp>
 
-namespace boost {
-namespace serialization {
+#include "EigenCompat.hpp"
+#include <Eigen/Core>
+#include <Eigen/SparseCore>
 
-template <class Archive, typename _Scalar, int _Options, typename _Index>
-void serialize(Archive &ar, Eigen::SparseMatrix<_Scalar, _Options, _Index> &m,
-               const unsigned int /*version*/) {
+template <typename T, typename S>
+struct ArrayData {
+    T *data;
+    S size;
 
-    _Index innerSize;
-    _Index outerSize;
-    _Index valuesSize;
+    template <typename Archive>
+    void CEREAL_SERIALIZE_FUNCTION_NAME(Archive &ar) {
+        using namespace cereal;
+        ar(make_size_tag(static_cast<size_type>(size)));
+        if constexpr (cereal::traits::is_text_archive<Archive>::value) { // NOLINT
+            for (S i = 0; i < size; ++i) {
+                ar(data[i]);
+            }
+        } else { // NOLINT
+            ar(binary_data(data, size * sizeof(*data)));
+        }
+    }
+};
 
-    if (Archive::is_saving::value) {
+template <typename T, typename S>
+ArrayData(T, S) -> ArrayData<std::remove_pointer_t<T>, std::decay_t<S>>;
+
+namespace cereal {
+
+template <typename Archive, typename Scalar, int Options, typename StorageIndex>
+void CEREAL_SERIALIZE_FUNCTION_NAME(Archive &ar,
+                                    Eigen::SparseMatrix<Scalar, Options, StorageIndex> &m) {
+    StorageIndex innerSize;
+    StorageIndex outerSize;
+    StorageIndex valuesSize;
+
+    if constexpr (Archive::is_saving::value) { // NOLINT
+        m.makeCompressed();
         innerSize = m.innerSize();
         outerSize = m.outerSize();
         valuesSize = m.nonZeros();
-
-        m.makeCompressed();
     }
 
-    ar &innerSize;
-    ar &outerSize;
-    ar &valuesSize;
+    ar(CEREAL_NVP(innerSize));
+    ar(CEREAL_NVP(outerSize));
+    ar(CEREAL_NVP(valuesSize));
 
-    if (Archive::is_loading::value) {
-        _Index rows = (m.IsRowMajor) ? outerSize : innerSize;
-        _Index cols = (m.IsRowMajor) ? innerSize : outerSize;
+    if constexpr (Archive::is_loading::value) { // NOLINT
+        StorageIndex const rows = (m.IsRowMajor) ? outerSize : innerSize;
+        StorageIndex const cols = (m.IsRowMajor) ? innerSize : outerSize;
         m.resize(rows, cols);
         m.resizeNonZeros(valuesSize);
     }
 
-    ar &make_array(m.innerIndexPtr(), valuesSize);
-    ar &make_array(m.outerIndexPtr(), outerSize + 1);
-    ar &make_array(m.valuePtr(), valuesSize);
+    ar(make_nvp("innerIndexPtr", ArrayData{m.innerIndexPtr(), valuesSize}));
+    ar(make_nvp("outerIndexPtr", ArrayData{m.outerIndexPtr(), outerSize + 1}));
+    ar(make_nvp("valuePtr", ArrayData{m.valuePtr(), valuesSize}));
 
-    if (Archive::is_loading::value) {
+    if constexpr (Archive::is_loading::value) { // NOLINT
         m.finalize();
     }
 }
 
-template <class Archive, typename _Scalar, int _Rows, int _Cols, int _Options, int _MaxRows,
-          int _MaxCols>
-void serialize(Archive &ar, Eigen::Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols> &m,
-               const unsigned int /*version*/) {
+template <class Archive, typename Scalar, int Rows, int Cols, int Options, int MaxRows, int MaxCols>
+void CEREAL_SERIALIZE_FUNCTION_NAME(
+    Archive &ar, Eigen::Matrix<Scalar, Rows, Cols, Options, MaxRows, MaxCols> &m) {
+    Eigen::Index rows;
+    Eigen::Index cols;
 
-    int rows;
-    int cols;
-
-    if (Archive::is_saving::value) {
+    if constexpr (Archive::is_saving::value) { // NOLINT
         rows = m.rows();
         cols = m.cols();
     }
 
-    ar &rows;
-    ar &cols;
+    ar(CEREAL_NVP(rows));
+    ar(CEREAL_NVP(cols));
 
-    if (Archive::is_loading::value) {
+    if constexpr (Archive::is_loading::value) { // NOLINT
         m.resize(rows, cols);
     }
 
-    ar &make_array(m.data(), rows * cols);
+    ar(make_nvp("data", ArrayData{m.data(), rows * cols}));
 }
 
-} // namespace serialization
-} // namespace boost
+} // namespace cereal
 
 #endif // SERIALIZATION_EIGEN_H

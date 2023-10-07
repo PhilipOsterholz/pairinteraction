@@ -9,12 +9,16 @@ __pycache__/
 obj/
 /old/examples/*
 /build
+_build
 
 # Mac specific files
 ._*
 .DS_Store
 .AppleDouble
 .LSOverride
+
+# VSCode specific files
+.vscode/
 
 # Ignore files resulting from executing a jupyter notebook
 /doc/sphinx/examples_python/.ipynb_checkpoints

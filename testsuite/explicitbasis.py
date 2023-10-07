@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from pairinteraction import picomplex as pi
+from pairinteraction import pireal as pi
 
 
 class ExplicitBasisTest(unittest.TestCase):
@@ -11,7 +11,6 @@ class ExplicitBasisTest(unittest.TestCase):
         self.cache = pi.MatrixElementCache()
 
     def test_basisvectors(self):
-
         one_atom_basisvectors_indices = [[0, 0], [0, 1], [1, 0], [1, 1]]
 
         # Setup states
@@ -42,7 +41,6 @@ class ExplicitBasisTest(unittest.TestCase):
             )
 
     def test_exception(self):
-
         one_atom_basisvectors_indices = [[0, 0], [0, 0]]
 
         # Setup states

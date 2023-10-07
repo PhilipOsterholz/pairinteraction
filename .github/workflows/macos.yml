@@ -3,8 +3,7 @@ name: macOS
 on:
   push:
   pull_request:
-  schedule:
-  - cron: '0 0 * * 1' # Every Monday at 00:00
+  workflow_call:
   workflow_dispatch:
     inputs:
       debug_enabled:
@@ -18,8 +17,6 @@ env:
   CTEST_PARALLEL_LEVEL: 3
   CTEST_OUTPUT_ON_FAILURE: 1
   CXXFLAGS: "-Wall -Wextra -Wpedantic"
-  QT_QPA_PLATFORM: "offscreen"
-  QT_DEBUG_PLUGINS: 1
 
 jobs:
   macos:
@@ -40,7 +37,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          brew install boost doctest eigen fmt gsl
+          brew install boost cereal doctest eigen fmt gsl lapack
           npm install -g fileicon
 
       - name: Configure
@@ -49,6 +46,9 @@ jobs:
         run: cmake --build build/ -- --keep-going
       - name: Test
         run: cmake --build build/ --target test -- --keep-going
+        env:
+          QT_QPA_PLATFORM: "offscreen"
+          QT_DEBUG_PLUGINS: 1
       - name: Package
         run: |
           cmake --build build/ --target package -- --keep-going
@@ -60,7 +60,7 @@ jobs:
           wheel unpack dist/*.whl -d wheelhouse/
           chmod +x wheelhouse/*/pairinteraction/pairinteraction-* wheelhouse/*/*.data/scripts/start_pairinteraction_gui
           cd wheelhouse/*/pairinteraction
-          python ../../../../apple/standalone.py .libs _picomplex.so _pireal.so pairinteraction-complex pairinteraction-real
+          python ../../../../apple/standalone.py .libs _binding.so pairinteraction-backend-deprecated
           cd ../../..
           wheel pack wheelhouse/* -d wheelhouse/
         working-directory: build/

@@ -23,11 +23,10 @@
 #include "Basisnames.hpp"
 #include "State.hpp"
 #include "Wavefunction.hpp"
-#include "dtypes.hpp"
 #include "utils.hpp"
 
-#include <boost/serialization/unordered_map.hpp>
-#include <boost/serialization/unordered_set.hpp>
+#include <cereal/types/unordered_map.hpp>
+#include <cereal/types/unordered_set.hpp>
 #include <wignerSymbols/wignerSymbols-cpp.h>
 
 #include <memory>
@@ -35,6 +34,11 @@
 #include <string>
 #include <tuple>
 #include <unordered_map>
+
+enum method_t {
+    NUMEROV = 0,
+    WHITTAKER = 1,
+};
 
 class StateOne;
 class StateTwo;
@@ -103,10 +107,11 @@ private:
         std::array<float, 2> j;
 
     private:
-        friend class boost::serialization::access;
+        friend class cereal::access;
         template <class Archive>
-        void serialize(Archive &ar, const unsigned int /*version*/) {
-            ar &method &species &kappa &n &l &j;
+        void serialize(Archive &ar, unsigned int /* version */) {
+            ar &CEREAL_NVP(method) & CEREAL_NVP(species) & CEREAL_NVP(kappa) & CEREAL_NVP(n) &
+                CEREAL_NVP(l) & CEREAL_NVP(j);
         }
     };
 
@@ -119,10 +124,10 @@ private:
         int sgn;
 
     private:
-        friend class boost::serialization::access;
+        friend class cereal::access;
         template <class Archive>
-        void serialize(Archive &ar, const unsigned int /*version*/) {
-            ar &kappa &j &m &sgn;
+        void serialize(Archive &ar, unsigned int /* version */) {
+            ar &CEREAL_NVP(kappa) & CEREAL_NVP(j) & CEREAL_NVP(m) & CEREAL_NVP(sgn);
         }
     };
 
@@ -137,10 +142,10 @@ private:
         int sgn;
 
     private:
-        friend class boost::serialization::access;
+        friend class cereal::access;
         template <class Archive>
-        void serialize(Archive &ar, const unsigned int /*version*/) {
-            ar &s &kappa &l &j &sgn;
+        void serialize(Archive &ar, unsigned int /* version */) {
+            ar &CEREAL_NVP(s) & CEREAL_NVP(kappa) & CEREAL_NVP(l) & CEREAL_NVP(j) & CEREAL_NVP(sgn);
         }
     };
 
@@ -153,10 +158,10 @@ private:
         int sgn;
 
     private:
-        friend class boost::serialization::access;
+        friend class cereal::access;
         template <class Archive>
-        void serialize(Archive &ar, const unsigned int /*version*/) {
-            ar &kappa &l &sgn;
+        void serialize(Archive &ar, unsigned int /* version */) {
+            ar &CEREAL_NVP(kappa) & CEREAL_NVP(l) & CEREAL_NVP(sgn);
         }
     };
 
@@ -205,15 +210,18 @@ private:
     /// Method for serialization ///////////////////////////////////////
     ////////////////////////////////////////////////////////////////////
 
-    friend class boost::serialization::access;
+    friend class cereal::access;
     template <class Archive>
-    void serialize(Archive &ar, const unsigned int /*version*/) {
-        ar &method;
-        ar &dbname;
-        ar &cache_radial &cache_angular &cache_reduced_commutes_s &cache_reduced_commutes_l
-            &cache_reduced_multipole;
-        ar &cache_radial_missing &cache_angular_missing &cache_reduced_commutes_s_missing
-            &cache_reduced_commutes_l_missing &cache_reduced_multipole_missing;
+    void serialize(Archive &ar, unsigned int /* version */) {
+        ar &CEREAL_NVP(method);
+        ar &CEREAL_NVP(dbname);
+        ar &CEREAL_NVP(cache_radial) & CEREAL_NVP(cache_angular) &
+            CEREAL_NVP(cache_reduced_commutes_s) & CEREAL_NVP(cache_reduced_commutes_l) &
+            CEREAL_NVP(cache_reduced_multipole);
+        ar &CEREAL_NVP(cache_radial_missing) & CEREAL_NVP(cache_angular_missing) &
+            CEREAL_NVP(cache_reduced_commutes_s_missing) &
+            CEREAL_NVP(cache_reduced_commutes_l_missing) &
+            CEREAL_NVP(cache_reduced_multipole_missing);
 
         if (Archive::is_loading::value && !dbname.empty()) {
             // Open database

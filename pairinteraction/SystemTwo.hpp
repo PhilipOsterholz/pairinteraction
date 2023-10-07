@@ -24,18 +24,26 @@
 #include "SystemBase.hpp"
 #include "SystemOne.hpp"
 
-#include <Eigen/Sparse>
+#include "EigenCompat.hpp"
+#include <Eigen/SparseCore>
 #include <boost/math/special_functions/binomial.hpp>
-#include <boost/serialization/base_object.hpp>
-#include <boost/serialization/unordered_map.hpp>
+#include <cereal/types/array.hpp>
+#include <cereal/types/base_class.hpp>
+#include <cereal/types/polymorphic.hpp>
+#include <cereal/types/string.hpp>
+#include <cereal/types/unordered_map.hpp>
+
 #include <cmath>
 #include <set>
 #include <type_traits>
 
-class SystemTwo : public SystemBase<StateTwo> {
+template <typename Scalar_>
+class SystemTwo : public SystemBase<Scalar_, StateTwo> {
 public:
-    SystemTwo(const SystemOne &b1, const SystemOne &b2, MatrixElementCache &cache);
-    SystemTwo(const SystemOne &b1, const SystemOne &b2, MatrixElementCache &cache,
+    using Scalar = Scalar_;
+    SystemTwo(const SystemOne<Scalar_> &b1, const SystemOne<Scalar_> &b2,
+              MatrixElementCache &cache);
+    SystemTwo(const SystemOne<Scalar_> &b1, const SystemOne<Scalar_> &b2, MatrixElementCache &cache,
               bool memory_saving);
 
     const std::array<std::string, 2> &getSpecies();
@@ -58,34 +66,38 @@ protected:
     void initializeBasis() override;
     void initializeInteraction() override;
     void addInteraction() override;
-    void transformInteraction(const eigen_sparse_t &transformator) override;
+    void transformInteraction(const Eigen::SparseMatrix<Scalar_> &transformator) override;
     void deleteInteraction() override;
-    eigen_sparse_t rotateStates(const std::vector<size_t> &states_indices, double alpha,
-                                double beta, double gamma) override;
-    eigen_sparse_t buildStaterotator(double alpha, double beta, double gamma) override;
-    void incorporate(SystemBase<StateTwo> &system) override;
+    Eigen::SparseMatrix<Scalar_> rotateStates(const std::vector<size_t> &states_indices,
+                                              double alpha, double beta, double gamma) override;
+    Eigen::SparseMatrix<Scalar_> buildStaterotator(double alpha, double beta,
+                                                   double gamma) override;
+    void incorporate(SystemBase<Scalar_, StateTwo> &system) override;
     void onStatesChange() override;
 
 private:
     std::array<std::string, 2> species;
-    SystemOne system1; // is needed in the initializeBasis method and afterwards deleted
-    SystemOne system2; // is needed in the initializeBasis method and afterwards deleted
+    SystemOne<Scalar_> system1; // is needed in the initializeBasis method and afterwards deleted
+    SystemOne<Scalar_> system2; // is needed in the initializeBasis method and afterwards deleted
 
-    std::unordered_map<int, eigen_sparse_t> interaction_angulardipole;
-    std::unordered_map<int, eigen_sparse_t> interaction_multipole;
-    std::unordered_map<int, eigen_sparse_t> interaction_greentensor_dd;
-    std::unordered_map<int, eigen_sparse_t> interaction_greentensor_dq;
-    std::unordered_map<int, eigen_sparse_t> interaction_greentensor_qd;
+    std::unordered_map<int, Eigen::SparseMatrix<Scalar_>> interaction_angulardipole;
+    std::unordered_map<int, Eigen::SparseMatrix<Scalar_>> interaction_multipole;
+    std::unordered_map<int, Eigen::SparseMatrix<Scalar_>> interaction_greentensor_dd;
+    std::unordered_map<int, Eigen::SparseMatrix<Scalar_>> interaction_greentensor_dq;
+    std::unordered_map<int, Eigen::SparseMatrix<Scalar_>> interaction_greentensor_qd;
 
     double minimal_le_roy_radius;
-    double distance, distance_x, distance_y, distance_z;
-    bool GTbool;
+    double distance;
+    double distance_x; // NOLINT
+    double distance_y; // NOLINT
+    double distance_z;
+    bool GTbool; // NOLINT
     double surface_distance;
-    unsigned int ordermax;
+    unsigned int ordermax; // NOLINT
 
-    parity_t sym_permutation;
-    parity_t sym_inversion;
-    parity_t sym_reflection;
+    parity_t sym_permutation; // NOLINT
+    parity_t sym_inversion;   // NOLINT
+    parity_t sym_reflection;  // NOLINT
     std::set<int> sym_rotation;
 
     std::unordered_map<int, double> angle_terms;
@@ -100,8 +112,8 @@ private:
 
     void checkDistance(const double &distance);
 
-    void addBasisvectors(const StateTwo &state, const size_t &col_new, const scalar_t &value_new,
-                         std::vector<eigen_triplet_t> &basisvectors_triplets,
+    void addBasisvectors(const StateTwo &state, const size_t &col_new, const Scalar_ &value_new,
+                         std::vector<Eigen::Triplet<Scalar_>> &basisvectors_triplets,
                          std::vector<double> &sqnorm_list);
 
     template <typename T>
@@ -147,9 +159,9 @@ private:
                  ++m2) {
                 StateTwo newstate(state.getSpecies(), state.getN(), state.getL(), state.getJ(),
                                   {{m1, m2}});
-                auto state_iter = states.get<1>().find(newstate);
+                auto state_iter = this->states.template get<1>().find(newstate);
 
-                if (state_iter != states.get<1>().end()) {
+                if (state_iter != this->states.template get<1>().end()) {
                     auto val = val1 * val2_vector[m2 + state.getSecondState().getJ()];
                     triplets.push_back(Eigen::Triplet<T>(state_iter->idx, idx, val));
                 } else {
@@ -167,18 +179,31 @@ private:
     /// Method for serialization ///////////////////////////////////////
     ////////////////////////////////////////////////////////////////////
 
-    friend class boost::serialization::access;
+    friend class cereal::access;
+    SystemTwo();
 
     template <class Archive>
-    void serialize(Archive &ar, const unsigned int /*version*/) {
-        ar &boost::serialization::base_object<SystemBase<StateTwo>>(*this);
-        ar &species &system1 &system2;
-        ar &distance &distance_x &distance_y &distance_z &surface_distance &ordermax;
-        ar &sym_permutation &sym_inversion &sym_reflection &sym_rotation;
-        ar &angle_terms &greentensor_terms_dd &greentensor_terms_dq &greentensor_terms_qd;
-        ar &interaction_angulardipole &interaction_multipole &interaction_greentensor_dd
-            &interaction_greentensor_dq &interaction_greentensor_qd;
+    void serialize(Archive &ar, unsigned int /* version */) {
+        ar &cereal::make_nvp("base_class", cereal::base_class<SystemBase<Scalar_, StateTwo>>(this));
+        ar &CEREAL_NVP(species) & CEREAL_NVP(system1) & CEREAL_NVP(system2);
+        ar &CEREAL_NVP(distance) & CEREAL_NVP(distance_x) & CEREAL_NVP(distance_y) &
+            CEREAL_NVP(distance_z) & CEREAL_NVP(surface_distance) & CEREAL_NVP(ordermax);
+        ar &CEREAL_NVP(sym_permutation) & CEREAL_NVP(sym_inversion) & CEREAL_NVP(sym_reflection) &
+            CEREAL_NVP(sym_rotation);
+        ar &CEREAL_NVP(angle_terms) & CEREAL_NVP(greentensor_terms_dd) &
+            CEREAL_NVP(greentensor_terms_dq) & CEREAL_NVP(greentensor_terms_qd);
+        ar &CEREAL_NVP(interaction_angulardipole) & CEREAL_NVP(interaction_multipole) &
+            CEREAL_NVP(interaction_greentensor_dd) & CEREAL_NVP(interaction_greentensor_dq) &
+            CEREAL_NVP(interaction_greentensor_qd);
     }
 };
+
+extern template class SystemTwo<std::complex<double>>;
+extern template class SystemTwo<double>;
+
+#ifndef SWIG
+CEREAL_REGISTER_TYPE(SystemTwo<std::complex<double>>) // NOLINT
+CEREAL_REGISTER_TYPE(SystemTwo<double>)               // NOLINT
+#endif
 
 #endif
