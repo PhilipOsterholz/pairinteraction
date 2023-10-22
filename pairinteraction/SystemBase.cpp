@@ -133,6 +133,16 @@ void SystemBase<Scalar, State>::restrictM(std::set<float> m) {
     range_m = m;
 }
 
+template <class Scalar, class State>
+void SystemBase<Scalar, State>::restrictPhN(int ph_n_min, int ph_n_max) {
+    this->range(range_ph_n, ph_n_min, ph_n_max);
+}
+
+template <class Scalar, class State>
+void SystemBase<Scalar, State>::restrictPhN(std::set<int> ph_n) {
+    range_ph_n = ph_n;
+}
+
 ////////////////////////////////////////////////////////////////////
 /// Method for adding user-defined states //////////////////////////
 ////////////////////////////////////////////////////////////////////

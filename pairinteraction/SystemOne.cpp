@@ -233,10 +233,10 @@ void SystemOne<Scalar>::initializeBasis() {
                     continue;
                 }
 
-                if (range_ph_n.empty()) {
+                if (this->range_ph_n.empty()) {
                     range_adapted_ph_n = { 0 };
                 } else {
-                    range_adapted_ph_n = range_ph_n;
+                    range_adapted_ph_n = this->range_ph_n;
                 }
 
                 for (auto ph_n : range_adapted_ph_n) {

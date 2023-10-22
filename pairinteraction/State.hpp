@@ -42,7 +42,7 @@ class MatrixElementCache;
 class StateOne {
 public:
     StateOne() = default;
-    explicit StateOne(std::string species, int n, int l, float j, float m, double ph_e = 0, int ph_n = 0);
+    explicit StateOne(std::string species, int n, int l, float j, float m, double ph_e = 0, int ph_n = 0, int ph_pol = 0);
     explicit StateOne(std::string label);
 
     // Methods for printing the state
@@ -57,6 +57,7 @@ public:
     const float &getS() const;
     const int &getPhN() const;
     const double &getPhE() const;
+    const int &getPhPol() const;
     const std::string &getSpecies() const;
     const std::string &getElement() const;
     double getEnergy() const;
@@ -82,7 +83,7 @@ private:
     // TODO make the variables constant (requires load_construct_data, see
     // https://stackoverflow.com/questions/50603180/serialization-of-class-with-const-members-using-boost)
     std::string species, element;
-    int n, l, ph_n;
+    int n, l, ph_n, ph_pol;
     float j, m, s;
     double ph_e;
     size_t hashvalue;
@@ -91,7 +92,7 @@ private:
     friend class cereal::access;
     template <class Archive>
     void serialize(Archive &ar, unsigned int /*version*/) {
-        ar &species &element &n &l &j &m &s &ph_e &ph_n &hashvalue;
+        ar &species &element &n &l &j &m &s &ph_e &ph_n &ph_pol &hashvalue;
     }
 
     // Utility methods
@@ -110,7 +111,7 @@ class StateTwo {
 public:
     StateTwo() = default;
     explicit StateTwo(std::array<std::string, 2> species, std::array<int, 2> n,
-                      std::array<int, 2> l, std::array<float, 2> j, std::array<float, 2> m, std::array<double, 2> ph_e = {{0,0}}, std::array<int, 2> ph_n = {{0, 0}});
+                      std::array<int, 2> l, std::array<float, 2> j, std::array<float, 2> m, std::array<double, 2> ph_e = {{0,0}}, std::array<int, 2> ph_n = {{0, 0}}, std::array<int, 2> ph_pol = {{0, 0}});
     explicit StateTwo(std::array<std::string, 2> label); // TODO use &&label?
     explicit StateTwo(StateOne first_state, StateOne second_state);
 
@@ -126,6 +127,7 @@ public:
     std::array<float, 2> getS() const;
     std::array<int, 2> getPhN() const;
     std::array<double, 2> getPhE() const;
+    std::array<int, 2> getPhPol() const;
     std::array<std::string, 2> getSpecies() const;
     std::array<std::string, 2> getElement() const;
     double getEnergy() const;
@@ -144,6 +146,7 @@ public:
     const float &getS(int idx) const;
     const int &getPhN(int idx) const;
     const double &getPhE(int idx) const;
+    const int &getPhPol(int idx) const;
     const std::string &getSpecies(int idx) const;
     const std::string &getElement(int idx) const;
     double getEnergy(int idx) const;
