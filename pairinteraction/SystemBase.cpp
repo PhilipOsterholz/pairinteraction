@@ -143,6 +143,16 @@ void SystemBase<Scalar, State>::restrictPhN(std::set<int> ph_n) {
     range_ph_n = ph_n;
 }
 
+template <class Scalar, class State>
+void SystemBase<Scalar, State>::restrictPhPol(int ph_pol_min, int ph_pol_max) {
+    this->range(range_ph_pol, ph_pol_min, ph_pol_max);
+}
+
+template <class Scalar, class State>
+void SystemBase<Scalar, State>::restrictPhPol(std::set<int> ph_pol) {
+    range_ph_pol = ph_pol;
+}
+
 ////////////////////////////////////////////////////////////////////
 /// Method for adding user-defined states //////////////////////////
 ////////////////////////////////////////////////////////////////////
@@ -1402,7 +1412,8 @@ bool SystemBase<Scalar, State>::checkIsQuantumstateValid(const StateOne &state, 
          checkIsQuantumnumberValid(state.getL(), range_l) &&
          checkIsQuantumnumberValid(state.getJ(), range_j) &&
          checkIsQuantumnumberValid(state.getM(), range_m) &&
-	 checkIsQuantumnumberValid(state.getPhN(), range_ph_n));
+	 checkIsQuantumnumberValid(state.getPhN(), range_ph_n) &&
+	 checkIsQuantumnumberValid(state.getPhN(), range_ph_pol));
 }
 
 template <class Scalar, class State>
@@ -1416,7 +1427,9 @@ bool SystemBase<Scalar, State>::checkIsQuantumstateValid(const StateTwo &state,
               checkIsQuantumnumberValid(state.getL(idx), range_l) &&
               checkIsQuantumnumberValid(state.getJ(idx), range_j) &&
               checkIsQuantumnumberValid(state.getM(idx), range_m) &&
-	      checkIsQuantumnumberValid(state.getPhN(idx), range_ph_n)));
+	      checkIsQuantumnumberValid(state.getPhN(idx), range_ph_n) &&
+	      checkIsQuantumnumberValid(state.getPhPol(idx), range_ph_pol)
+	      ));
     }
     return valid;
 }
@@ -1561,6 +1574,7 @@ void SystemBase<Scalar, State>::forgetRestrictions() {
     range_j.clear();
     range_m.clear();
     range_ph_n.clear();
+    range_ph_pol.clear();
     states_to_add.clear();
 }
 
@@ -1571,7 +1585,7 @@ void SystemBase<Scalar, State>::forgetRestrictions() {
 template <class Scalar, class State>
 void SystemBase<Scalar, State>::updateEverything() {
 
-    if (!range_n.empty() || !range_l.empty() || !range_j.empty() || !range_m.empty() || !range_ph_n.empty()) {
+    if (!range_n.empty() || !range_l.empty() || !range_j.empty() || !range_m.empty() || !range_ph_n.empty() || !range_ph_pol.empty()) {
 
         ////////////////////////////////////////////////////////////////////
         /// Remove restricted states ///////////////////////////////////////
@@ -1586,7 +1600,7 @@ void SystemBase<Scalar, State>::updateEverything() {
         this->onStatesChange();
     }
 
-    if (!range_n.empty() || !range_l.empty() || !range_j.empty() || !range_m.empty() || !range_ph_n.empty() ||
+    if (!range_n.empty() || !range_l.empty() || !range_j.empty() || !range_m.empty() || !range_ph_n.empty() || !range_ph_pol.empty() ||
         energy_min != std::numeric_limits<double>::lowest() ||
         energy_max != std::numeric_limits<double>::max()) {
 

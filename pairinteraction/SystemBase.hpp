@@ -147,6 +147,10 @@ public:
     void restrictPhN(int ph_n_min, int ph_n_max);
 
     void restrictPhN(std::set<int> ph_n);
+    
+    void restrictPhPol(int ph_pol_min, int ph_pol_max);
+
+    void restrictPhPol(std::set<int> ph_pol);
 
     ////////////////////////////////////////////////////////////////////
     /// Method for adding user-defined states //////////////////////////
@@ -298,7 +302,7 @@ protected:
     double threshold_for_sqnorm{0.05};
 
     double energy_min, energy_max;
-    std::set<int> range_n, range_l, range_ph_n;
+    std::set<int> range_n, range_l, range_ph_n, range_ph_pol;
     std::set<float> range_j, range_m;
     std::set<State> states_to_add;
 
@@ -400,7 +404,7 @@ private:
     void serialize(Archive &ar, unsigned int /*version*/) {
         ar &cereal::make_nvp("cache", *m_cache) & CEREAL_NVP(threshold_for_sqnorm);
         ar &CEREAL_NVP(energy_min) & CEREAL_NVP(energy_max) & CEREAL_NVP(range_n) &
-            CEREAL_NVP(range_l) & CEREAL_NVP(range_j) & CEREAL_NVP(range_m) & CEREAL_NVP(range_ph_n) &
+            CEREAL_NVP(range_l) & CEREAL_NVP(range_j) & CEREAL_NVP(range_m) & CEREAL_NVP(range_ph_n) & CEREAL_NVP(range_ph_pol) &
             CEREAL_NVP(states_to_add);
         ar &CEREAL_NVP(memory_saving) & CEREAL_NVP(is_interaction_already_contained) &
             CEREAL_NVP(is_new_hamiltonian_required);

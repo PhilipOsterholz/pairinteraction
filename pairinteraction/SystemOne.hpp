@@ -55,6 +55,7 @@ public:
                    std::array<double, 3> to_y_axis);
     void setEfield(std::array<double, 3> field, double alpha, double beta, double gamma);
     void setBfield(std::array<double, 3> field, double alpha, double beta, double gamma);
+    void setMWfield(std::array<Scalar_, 3> spherical_amplitude);
     void enableDiamagnetism(bool enable);
     void setMWfield_freq(double mw_freq);
     void setIonCharge(int c);
@@ -78,6 +79,7 @@ protected:
 private:
     std::array<double, 3> efield, bfield;
     std::unordered_map<int, Scalar_> efield_spherical, bfield_spherical;
+    std::unordered_map<int, Scalar_> mwfield_spherical;
     bool diamagnetism;
     std::unordered_map<std::array<int, 2>, Scalar_, utils::hash<std::array<int, 2>>>
         diamagnetism_terms;
@@ -89,6 +91,7 @@ private:
 
     std::unordered_map<int, Eigen::SparseMatrix<Scalar_>> interaction_efield;
     std::unordered_map<int, Eigen::SparseMatrix<Scalar_>> interaction_bfield;
+    std::unordered_map<int, Eigen::SparseMatrix<Scalar_>> interaction_mwfield;
     std::unordered_map<std::array<int, 2>, Eigen::SparseMatrix<Scalar_>,
                        utils::hash<std::array<int, 2>>>
         interaction_diamagnetism;

@@ -48,6 +48,7 @@ bool selectionRulesMomentumNew(
     int q); // TODO rename, integrate into the MatrixElementCache namespace
 bool selectionRulesMomentumNew(StateOne const &state1, StateOne const &state2);
 bool selectionRulesMultipoleNew(StateOne const &state1, StateOne const &state2, int kappa, int q);
+bool selectionRulesMultipoleNew(StateOne const &state1, StateOne const &state2, int kappa, int q, int dmw);
 bool selectionRulesMultipoleNew(StateOne const &state1, StateOne const &state2, int kappa);
 
 class MatrixElementCache {
