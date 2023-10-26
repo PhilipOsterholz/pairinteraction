@@ -34,13 +34,15 @@
 
 template <typename Scalar>
 SystemOne<Scalar>::SystemOne()
-    : efield({{0, 0, 0}}), bfield({{0, 0, 0}}), sym_rotation({static_cast<float>(ARB)}), microwave_freq(0) {}
+    : efield({{0, 0, 0}}), bfield({{0, 0, 0}}), sym_rotation({static_cast<float>(ARB)}),
+      microwave_freq(0) {}
 
 template <typename Scalar>
 SystemOne<Scalar>::SystemOne(std::string species, MatrixElementCache &cache)
     : SystemBase<Scalar, StateOne>(cache), efield({{0, 0, 0}}), bfield({{0, 0, 0}}),
       diamagnetism(true), charge(0), ordermax(0), distance(std::numeric_limits<double>::max()),
-      species(std::move(species)), sym_reflection(NA), sym_rotation({static_cast<float>(ARB)}), microwave_freq(0) {}
+      species(std::move(species)), sym_reflection(NA), sym_rotation({static_cast<float>(ARB)}),
+      microwave_freq(0) {}
 
 template <typename Scalar>
 SystemOne<Scalar>::SystemOne(std::string species, MatrixElementCache &cache, bool memory_saving)
@@ -60,16 +62,15 @@ void SystemOne<Scalar>::setEfield(std::array<double, 3> field) {
 
     // Transform the electric field into spherical coordinates
     this->changeToSphericalbasis(efield, efield_spherical);
-} 
+}
 
 template <typename Scalar>
-void  SystemOne<Scalar>::setMWfield(std::array<Scalar, 3> spherical_amplitude ){
-	this->onParameterChange();
+void SystemOne<Scalar>::setMWfield(std::array<Scalar, 3> spherical_amplitude) {
+    this->onParameterChange();
 
-	mwfield_spherical[1] = spherical_amplitude[2];
-	mwfield_spherical[-1] = spherical_amplitude[0];
-	mwfield_spherical[0] = spherical_amplitude[1];
-
+    mwfield_spherical[1] = spherical_amplitude[2];
+    mwfield_spherical[-1] = spherical_amplitude[0];
+    mwfield_spherical[0] = spherical_amplitude[1];
 }
 
 template <typename Scalar>
@@ -125,7 +126,9 @@ void SystemOne<Scalar>::enableDiamagnetism(bool enable) {
 }
 
 template <typename Scalar>
-void SystemOne<Scalar>::setMWfield_freq(double mw_freq) { //TODO: This might lead to strange behaviour when the state base is not recalculated. For now requires explicite recalculating
+void SystemOne<Scalar>::setMWfield_freq(
+    double mw_freq) { // TODO: This might lead to strange behaviour when the state base is not
+                      // recalculated. For now requires explicite recalculating
     this->onParameterChange();
     microwave_freq = mw_freq;
 }
@@ -241,30 +244,31 @@ void SystemOne<Scalar>::initializeBasis() {
                 }
 
                 if (this->range_ph_n.empty()) {
-                    range_adapted_ph_n = { 0 };
+                    range_adapted_ph_n = {0};
                 } else {
                     range_adapted_ph_n = this->range_ph_n;
                 }
 
                 for (auto ph_n : range_adapted_ph_n) {
 
-                    double energy = StateOne(species, n, l, j, s, microwave_freq, ph_n).getEnergy(cache);
+                    double energy =
+                        StateOne(species, n, l, j, s, microwave_freq, ph_n).getEnergy(cache);
                     if (!this->checkIsEnergyValid(energy)) {
                         continue;
                     }
 
-		    if (this->range_ph_pol.empty()) {
-			this->range(range_adapted_ph_pol, -1, 1);
-		    } else {
-			range_adapted_ph_pol = this->range_ph_pol;
-		    }
+                    if (this->range_ph_pol.empty()) {
+                        this->range(range_adapted_ph_pol, -1, 1);
+                    } else {
+                        range_adapted_ph_pol = this->range_ph_pol;
+                    }
 
-		    for (auto ph_pol : range_adapted_ph_pol){
+                    for (auto ph_pol : range_adapted_ph_pol) {
                         if (std::fabs(ph_pol) > std::fabs(ph_n)) {
                             continue;
                         }
 
-            	        if (this->range_m.empty()) {
+                        if (this->range_m.empty()) {
                             this->range(range_adapted_m, -j, j);
                         } else {
                             range_adapted_m = this->range_m;
@@ -273,9 +277,10 @@ void SystemOne<Scalar>::initializeBasis() {
                         // Consider rotation symmetry
                         std::set<float> range_allowed_m;
                         if (sym_rotation.count(static_cast<float>(ARB)) == 0) {
-                            std::set_intersection(sym_rotation.begin(), sym_rotation.end(),
-                                              range_adapted_m.begin(), range_adapted_m.end(),
-                                              std::inserter(range_allowed_m, range_allowed_m.begin()));
+                            std::set_intersection(
+                                sym_rotation.begin(), sym_rotation.end(), range_adapted_m.begin(),
+                                range_adapted_m.end(),
+                                std::inserter(range_allowed_m, range_allowed_m.begin()));
                         } else {
                             range_allowed_m = range_adapted_m;
                         }
@@ -288,16 +293,19 @@ void SystemOne<Scalar>::initializeBasis() {
                             // Create state
                             StateOne state(species, n, l, j, m, microwave_freq, ph_n, ph_pol);
 
-                            // Check whether reflection symmetry can be realized with the states available
+                            // Check whether reflection symmetry can be realized with the states
+                            // available
                             if (sym_reflection != NA && state.getM() != 0 &&
                                 range_allowed_m.count(-state.getM()) == 0) {
-                                throw std::runtime_error("The momentum " + std::to_string(-state.getM()) +
-                                                 " required by symmetries cannot be found.");
+                                throw std::runtime_error(
+                                    "The momentum " + std::to_string(-state.getM()) +
+                                    " required by symmetries cannot be found.");
                             }
 
                             // Add symmetrized basis vectors
-                            this->addSymmetrizedBasisvectors(state, idx, energy, basisvectors_triplets,
-                                                         hamiltonian_triplets, sym_reflection);
+                            this->addSymmetrizedBasisvectors(state, idx, energy,
+                                                             basisvectors_triplets,
+                                                             hamiltonian_triplets, sym_reflection);
                         }
                     }
                 }
@@ -424,10 +432,11 @@ void SystemOne<Scalar>::initializeInteraction() {
     }
 
     for (const auto &entry : mwfield_spherical) {
-		if (std::abs(entry.second) > tolerance && 
-			interaction_mwfield.find(entry.first) == interaction_mwfield.end()) { //TODO understand minus sign in other cases
-				mwrange.push_back(entry.first);
-		}
+        if (std::abs(entry.second) > tolerance &&
+            interaction_mwfield.find(entry.first) ==
+                interaction_mwfield.end()) { // TODO understand minus sign in other cases
+            mwrange.push_back(entry.first);
+        }
     }
 
     // Return if there is nothing to do
@@ -480,8 +489,7 @@ void SystemOne<Scalar>::initializeInteraction() {
         interaction_diamagnetism_triplets; // TODO reserve
     std::unordered_map<int, std::vector<Eigen::Triplet<Scalar>>>
         interaction_multipole_triplets; // TODO reserve
-    std::unordered_map<int, std::vector<Eigen::Triplet<Scalar>>>
-		interaction_microwave_triplets;
+    std::unordered_map<int, std::vector<Eigen::Triplet<Scalar>>> interaction_microwave_triplets;
     // Loop over column entries
     for (const auto &c : this->states) { // TODO parallelization
         if (c.state.isArtificial()) {
@@ -535,13 +543,14 @@ void SystemOne<Scalar>::initializeInteraction() {
                 }
             }
 
-	    	for (const auto &i : mwrange) {
-				if (selectionRulesMultipoleNew(r.state, c.state, 1, i, 1) ||  
-						selectionRulesMultipoleNew(r.state, c.state, 1, -i, -1)){ //TODO check if that is correct handedness.
-                    			Scalar value = cache.getElectricDipole(r.state, c.state);
-					this->addTriplet(interaction_microwave_triplets[i], r.idx, c.idx, value);
-				}
-	    	}
+            for (const auto &i : mwrange) {
+                if (selectionRulesMultipoleNew(r.state, c.state, 1, i, 1) ||
+                    selectionRulesMultipoleNew(r.state, c.state, 1, -i,
+                                               -1)) { // TODO check if that is correct handedness.
+                    Scalar value = cache.getElectricDipole(r.state, c.state);
+                    this->addTriplet(interaction_microwave_triplets[i], r.idx, c.idx, value);
+                }
+            }
 
             // Multipole interaction with an ion
             if (charge != 0) {
@@ -613,21 +622,22 @@ void SystemOne<Scalar>::initializeInteraction() {
         }
     }
 
-	for (const auto &i: mwrange) {
-		interaction_mwfield[i].resize(this->states.size(), this->states.size());
-		interaction_mwfield[i].setFromTriplets(interaction_microwave_triplets[i].begin(),
-							interaction_microwave_triplets[i].end());
-		interaction_microwave_triplets[i].clear();
-        
-		if (i == 0) {
+    for (const auto &i : mwrange) {
+        interaction_mwfield[i].resize(this->states.size(), this->states.size());
+        interaction_mwfield[i].setFromTriplets(interaction_microwave_triplets[i].begin(),
+                                               interaction_microwave_triplets[i].end());
+        interaction_microwave_triplets[i].clear();
+
+        if (i == 0) {
             interaction_mwfield[i] = this->basisvectors.adjoint() *
-            	interaction_mwfield[i].template selfadjointView<Eigen::Lower>() * this->basisvectors;
+                interaction_mwfield[i].template selfadjointView<Eigen::Lower>() *
+                this->basisvectors;
         } else {
             interaction_mwfield[i] =
                 this->basisvectors.adjoint() * interaction_mwfield[i] * this->basisvectors;
-            //interaction_mwfield[-i] = interaction_mwfield[i].adjoint();
+            // interaction_mwfield[-i] = interaction_mwfield[i].adjoint();
         }
-	}
+    }
 
     if (charge != 0) {
         for (const auto &i : orange) {
@@ -675,19 +685,18 @@ void SystemOne<Scalar>::addInteraction() {
     if (std::abs(bfield_spherical[+1]) > tolerance) {
         this->hamiltonian += interaction_bfield[-1] * bfield_spherical[+1];
     }
-        
+
     if (std::abs(mwfield_spherical[+0]) > tolerance) {
         this->hamiltonian -= interaction_mwfield[+0] * mwfield_spherical[+0];
     }
-    
+
     if (std::abs(mwfield_spherical[-1]) > tolerance) {
         this->hamiltonian += interaction_mwfield[-1] * mwfield_spherical[-1];
     }
-     
+
     if (std::abs(mwfield_spherical[+1]) > tolerance) {
         this->hamiltonian += interaction_mwfield[+1] * mwfield_spherical[+1];
     }
-    
 
     if (diamagnetism && std::abs(diamagnetism_terms[{{0, +0}}]) > tolerance) {
         this->hamiltonian += interaction_diamagnetism[{{0, +0}}] * diamagnetism_terms[{{0, +0}}];

@@ -62,14 +62,18 @@ bool selectionRulesMultipoleNew(StateOne const &state1, StateOne const &state2, 
     bool noZero =
         !(kappa == 2 && state1.getJ() == state2.getJ() && state2.getJ() == 1.5 &&
           state1.getM() == -state2.getM() && std::fabs(state1.getM() - state2.getM()) == 1);
-    
+
     bool validPhN = (state1.getPhN() == state2.getPhN());
-    bool validPhPol = ((state1.getPhN() == 0) || (state2.getPhN() == 0) || (state1.getPhPol() == state2.getPhPol())); // for us the phN=0 state is always linear in photon polarization
+    bool validPhPol =
+        ((state1.getPhN() == 0) || (state2.getPhN() == 0) ||
+         (state1.getPhPol() ==
+          state2.getPhPol())); // for us the phN=0 state is always linear in photon polarization
 
     return validL && validJ && validM && validQ && validPhN && validPhPol && noZero;
 }
 
-bool selectionRulesMultipoleNew(StateOne const &state1, StateOne const &state2, int kappa, int q, int dmw) {
+bool selectionRulesMultipoleNew(StateOne const &state1, StateOne const &state2, int kappa, int q,
+                                int dmw) {
     bool validL = (abs(state1.getL() - state2.getL()) <= kappa) &&
         (kappa % 2 == abs(state1.getL() - state2.getL()) % 2);
     bool validJ = (std::fabs(state1.getJ() - state2.getJ()) <= kappa) &&
@@ -79,10 +83,15 @@ bool selectionRulesMultipoleNew(StateOne const &state1, StateOne const &state2, 
     bool noZero =
         !(kappa == 2 && state1.getJ() == state2.getJ() && state2.getJ() == 1.5 &&
           state1.getM() == -state2.getM() && std::fabs(state1.getM() - state2.getM()) == 1);
-    
-    bool validPhPol = ((state1.getPhN() == 0) || (state2.getPhN() == 0) || (state1.getPhPol() == state2.getPhPol())); // for us the phN=0 state is always linear in photon polarization
 
-    bool validPhN = ((state2.getPhN() - state1.getPhN()) == dmw); // we don't use abs here to make absorption and emission of MW photons explicite.
+    bool validPhPol =
+        ((state1.getPhN() == 0) || (state2.getPhN() == 0) ||
+         (state1.getPhPol() ==
+          state2.getPhPol())); // for us the phN=0 state is always linear in photon polarization
+
+    bool validPhN =
+        ((state2.getPhN() - state1.getPhN()) ==
+         dmw); // we don't use abs here to make absorption and emission of MW photons explicite.
 
     return validL && validJ && validM && validQ && validPhN && validPhPol && noZero;
 }
@@ -96,7 +105,7 @@ bool selectionRulesMultipoleNew(StateOne const &state1, StateOne const &state2, 
     bool noZero =
         !(kappa == 2 && state1.getJ() == state2.getJ() && state2.getJ() == 1.5 &&
           state1.getM() == -state2.getM() && std::fabs(state1.getM() - state2.getM()) == 1);
-    
+
     bool validPhN = state1.getPhN() == state2.getPhN();
     bool validPhPol = state1.getPhPol() == state2.getPhPol();
 

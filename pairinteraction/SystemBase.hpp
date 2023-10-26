@@ -147,7 +147,7 @@ public:
     void restrictPhN(int ph_n_min, int ph_n_max);
 
     void restrictPhN(std::set<int> ph_n);
-    
+
     void restrictPhPol(int ph_pol_min, int ph_pol_max);
 
     void restrictPhPol(std::set<int> ph_pol);
@@ -387,7 +387,7 @@ protected:
 
 private:
     void forgetRestrictions();
-    
+
     ////////////////////////////////////////////////////////////////////
     /// Method to update the system ////////////////////////////////////
     ////////////////////////////////////////////////////////////////////
@@ -404,8 +404,8 @@ private:
     void serialize(Archive &ar, unsigned int /*version*/) {
         ar &cereal::make_nvp("cache", *m_cache) & CEREAL_NVP(threshold_for_sqnorm);
         ar &CEREAL_NVP(energy_min) & CEREAL_NVP(energy_max) & CEREAL_NVP(range_n) &
-            CEREAL_NVP(range_l) & CEREAL_NVP(range_j) & CEREAL_NVP(range_m) & CEREAL_NVP(range_ph_n) & CEREAL_NVP(range_ph_pol) &
-            CEREAL_NVP(states_to_add);
+            CEREAL_NVP(range_l) & CEREAL_NVP(range_j) & CEREAL_NVP(range_m) &
+            CEREAL_NVP(range_ph_n) & CEREAL_NVP(range_ph_pol) & CEREAL_NVP(states_to_add);
         ar &CEREAL_NVP(memory_saving) & CEREAL_NVP(is_interaction_already_contained) &
             CEREAL_NVP(is_new_hamiltonian_required);
         ar &CEREAL_NVP(states) & CEREAL_NVP(basisvectors) & CEREAL_NVP(hamiltonian);

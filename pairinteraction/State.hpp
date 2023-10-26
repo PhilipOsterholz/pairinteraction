@@ -42,7 +42,8 @@ class MatrixElementCache;
 class StateOne {
 public:
     StateOne() = default;
-    explicit StateOne(std::string species, int n, int l, float j, float m, double ph_e = 0, int ph_n = 0, int ph_pol = 0);
+    explicit StateOne(std::string species, int n, int l, float j, float m, double ph_e = 0,
+                      int ph_n = 0, int ph_pol = 0);
     explicit StateOne(std::string label);
 
     // Methods for printing the state
@@ -111,7 +112,9 @@ class StateTwo {
 public:
     StateTwo() = default;
     explicit StateTwo(std::array<std::string, 2> species, std::array<int, 2> n,
-                      std::array<int, 2> l, std::array<float, 2> j, std::array<float, 2> m, std::array<double, 2> ph_e = {{0,0}}, std::array<int, 2> ph_n = {{0, 0}}, std::array<int, 2> ph_pol = {{0, 0}});
+                      std::array<int, 2> l, std::array<float, 2> j, std::array<float, 2> m,
+                      std::array<double, 2> ph_e = {{0, 0}}, std::array<int, 2> ph_n = {{0, 0}},
+                      std::array<int, 2> ph_pol = {{0, 0}});
     explicit StateTwo(std::array<std::string, 2> label); // TODO use &&label?
     explicit StateTwo(StateOne first_state, StateOne second_state);
 
