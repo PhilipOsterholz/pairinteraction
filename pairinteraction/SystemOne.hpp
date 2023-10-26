@@ -87,7 +87,7 @@ private:
     unsigned int ordermax;
     double distance;
     std::string species;
-    double microwave_freq;
+    double microwave_freq{0};
 
     std::unordered_map<int, Eigen::SparseMatrix<Scalar_>> interaction_efield;
     std::unordered_map<int, Eigen::SparseMatrix<Scalar_>> interaction_bfield;
