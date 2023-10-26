@@ -260,7 +260,7 @@ void SystemOne<Scalar>::initializeBasis() {
 		    }
 
 		    for (auto ph_pol : range_adapted_ph_pol){
-                        if (std::fabs(ph_pol) > ph_n) {
+                        if (std::fabs(ph_pol) > std::fabs(ph_n)) {
                             continue;
                         }
 
@@ -431,7 +431,7 @@ void SystemOne<Scalar>::initializeInteraction() {
     }
 
     // Return if there is nothing to do
-    if (erange.empty() && brange.empty() && drange.empty() && orange.empty()) {
+    if (erange.empty() && brange.empty() && drange.empty() && orange.empty() && mwrange.empty()) {
         return;
     }
 
@@ -453,6 +453,12 @@ void SystemOne<Scalar>::initializeInteraction() {
         cache.precalculateDiamagnetism(states_converted, i[0], i[1]);
         if (i[1] != 0) {
             cache.precalculateDiamagnetism(states_converted, i[0], -i[1]);
+        }
+    }
+    for (const auto &i : mwrange) {
+        cache.precalculateElectricMomentum(states_converted, i);
+        if (i != 0) {
+            cache.precalculateElectricMomentum(states_converted, -i);
         }
     }
     if (charge != 0) {
@@ -530,13 +536,9 @@ void SystemOne<Scalar>::initializeInteraction() {
             }
 
 	    	for (const auto &i : mwrange) {
-				if (i == 0 && r.idx < c.idx) { //TODO did not quite get this.
-					continue;
-				}
-
 				if (selectionRulesMultipoleNew(r.state, c.state, 1, i, 1) ||  
 						selectionRulesMultipoleNew(r.state, c.state, 1, -i, -1)){ //TODO check if that is correct handedness.
-					Scalar value = cache.getElectricDipole(r.state, c.state);
+                    			Scalar value = cache.getElectricDipole(r.state, c.state);
 					this->addTriplet(interaction_microwave_triplets[i], r.idx, c.idx, value);
 				}
 	    	}
@@ -614,16 +616,16 @@ void SystemOne<Scalar>::initializeInteraction() {
 	for (const auto &i: mwrange) {
 		interaction_mwfield[i].resize(this->states.size(), this->states.size());
 		interaction_mwfield[i].setFromTriplets(interaction_microwave_triplets[i].begin(),
-												interaction_microwave_triplets[i].end());
+							interaction_microwave_triplets[i].end());
 		interaction_microwave_triplets[i].clear();
         
 		if (i == 0) {
             interaction_mwfield[i] = this->basisvectors.adjoint() *
-                interaction_mwfield[i].template selfadjointView<Eigen::Lower>() * this->basisvectors;
+            	interaction_mwfield[i].template selfadjointView<Eigen::Lower>() * this->basisvectors;
         } else {
             interaction_mwfield[i] =
                 this->basisvectors.adjoint() * interaction_mwfield[i] * this->basisvectors;
-            interaction_mwfield[-i] = std::pow(-1, i) * interaction_efield[i].adjoint();
+            //interaction_mwfield[-i] = interaction_mwfield[i].adjoint();
         }
 	}
 
@@ -673,16 +675,19 @@ void SystemOne<Scalar>::addInteraction() {
     if (std::abs(bfield_spherical[+1]) > tolerance) {
         this->hamiltonian += interaction_bfield[-1] * bfield_spherical[+1];
     }
-
+        
     if (std::abs(mwfield_spherical[+0]) > tolerance) {
         this->hamiltonian -= interaction_mwfield[+0] * mwfield_spherical[+0];
     }
+    
     if (std::abs(mwfield_spherical[-1]) > tolerance) {
-        this->hamiltonian += interaction_mwfield[+1] * mwfield_spherical[-1];
+        this->hamiltonian += interaction_mwfield[-1] * mwfield_spherical[-1];
     }
+     
     if (std::abs(mwfield_spherical[+1]) > tolerance) {
-        this->hamiltonian += interaction_mwfield[-1] * mwfield_spherical[+1];
+        this->hamiltonian += interaction_mwfield[+1] * mwfield_spherical[+1];
     }
+    
 
     if (diamagnetism && std::abs(diamagnetism_terms[{{0, +0}}]) > tolerance) {
         this->hamiltonian += interaction_diamagnetism[{{0, +0}}] * diamagnetism_terms[{{0, +0}}];
