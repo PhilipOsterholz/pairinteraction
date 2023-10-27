@@ -257,11 +257,14 @@ void SystemOne<Scalar>::initializeBasis() {
                         continue;
                     }
 
-                    if (this->range_ph_pol.empty()) {
+		    		if( ph_n == 0) {
+                        this->range(range_adapted_ph_pol, 0, 0);
+		    		} else if (this->range_ph_pol.empty()) {
                         this->range(range_adapted_ph_pol, -1, 1);
                     } else {
                         range_adapted_ph_pol = this->range_ph_pol;
                     }
+
 
                     for (auto ph_pol : range_adapted_ph_pol) {
                         if (std::fabs(ph_pol) > std::fabs(ph_n)) {
